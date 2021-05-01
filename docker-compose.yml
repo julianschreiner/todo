@@ -1,0 +1,40 @@
+version: "3"
+
+networks:
+  uas:
+    external: true
+
+services:
+  todo-uas:
+    image: todo
+    hostname: todo
+    container_name: todo-uas
+    command: make start
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 40022:40000
+    volumes:
+      - type: bind
+        source: .
+        target: /home/app
+      - type: bind
+        source: ./db/migrations
+        target: /home/app/migrations
+    working_dir: /home/app
+    environment:
+      DB_NAME: todo
+      DB_USER: asd
+      DB_PW:
+    networks:
+      - uas
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.todo.rule=Path(`/todo`) || PathPrefix(`/todo/`)"
+      - "traefik.http.routers.todo.priority=200"
+      - "traefik.http.routers.todo.entrypoints=websecure"
+      - "traefik.http.routers.todo.tls=true"
+      - "traefik.http.routers.todo.tls.certresolver=myresolver"
+      - "traefik.http.services.todo.loadbalancer.server.port=5050"
+    restart: always

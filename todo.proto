@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package todo;
+
+import "github.com/metaverse/truss/deftree/googlethirdparty/annotations.proto";
+
+service Todo {
+  rpc Create(CreateRequest) returns (CreateResponse) {
+    option(google.api.http) = {
+      post: "/todo"
+      body: "*"
+    };
+  }
+
+}
+
+
+message CreateRequest {
+
+}
+
+message CreateResponse {
+
+}
