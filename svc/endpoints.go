@@ -40,7 +40,10 @@ type Endpoints struct {
 	httpResponseEncoders map[string]httptransport.EncodeResponseFunc
 	httpHandlerFuncs     map[string]func(http.ResponseWriter, *http.Request)
 
-	CreateEndpoint endpoint.Endpoint
+	CreateTodoEndpoint endpoint.Endpoint
+	GetAllEndpoint     endpoint.Endpoint
+	GetTodoEndpoint    endpoint.Endpoint
+	DeleteTodoEndpoint endpoint.Endpoint
 }
 
 func NewEndpoints() Endpoints {
@@ -54,20 +57,77 @@ func NewEndpoints() Endpoints {
 
 // Endpoints
 
-func (e Endpoints) Create(ctx context.Context, in *pb.CreateRequest) (*pb.CreateResponse, error) {
-	response, err := e.CreateEndpoint(ctx, in)
+func (e Endpoints) CreateTodo(ctx context.Context, in *pb.CreateTodoRequest) (*pb.CreateTodoResponse, error) {
+	response, err := e.CreateTodoEndpoint(ctx, in)
 	if err != nil {
 		return nil, err
 	}
-	return response.(*pb.CreateResponse), nil
+	return response.(*pb.CreateTodoResponse), nil
+}
+
+func (e Endpoints) GetAll(ctx context.Context, in *pb.GetAllRequest) (*pb.GetAllResponse, error) {
+	response, err := e.GetAllEndpoint(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	return response.(*pb.GetAllResponse), nil
+}
+
+func (e Endpoints) GetTodo(ctx context.Context, in *pb.GetTodoRequest) (*pb.GetTodoResponse, error) {
+	response, err := e.GetTodoEndpoint(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	return response.(*pb.GetTodoResponse), nil
+}
+
+func (e Endpoints) DeleteTodo(ctx context.Context, in *pb.DeleteTodoRequest) (*pb.DeleteTodoResponse, error) {
+	response, err := e.DeleteTodoEndpoint(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	return response.(*pb.DeleteTodoResponse), nil
 }
 
 // Make Endpoints
 
-func MakeCreateEndpoint(s pb.TodoServer) endpoint.Endpoint {
+func MakeCreateTodoEndpoint(s pb.TodoServer) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req := request.(*pb.CreateRequest)
-		v, err := s.Create(ctx, req)
+		req := request.(*pb.CreateTodoRequest)
+		v, err := s.CreateTodo(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return v, nil
+	}
+}
+
+func MakeGetAllEndpoint(s pb.TodoServer) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(*pb.GetAllRequest)
+		v, err := s.GetAll(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return v, nil
+	}
+}
+
+func MakeGetTodoEndpoint(s pb.TodoServer) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(*pb.GetTodoRequest)
+		v, err := s.GetTodo(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return v, nil
+	}
+}
+
+func MakeDeleteTodoEndpoint(s pb.TodoServer) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(*pb.DeleteTodoRequest)
+		v, err := s.DeleteTodo(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +142,10 @@ func MakeCreateEndpoint(s pb.TodoServer) endpoint.Endpoint {
 // WrapAllExcept(middleware, "Status", "Ping")
 func (e *Endpoints) WrapAllExcept(middleware endpoint.Middleware, excluded ...string) {
 	included := map[string]struct{}{
-		"Create": {},
+		"CreateTodo": {},
+		"GetAll":     {},
+		"GetTodo":    {},
+		"DeleteTodo": {},
 	}
 
 	for _, ex := range excluded {
@@ -93,8 +156,17 @@ func (e *Endpoints) WrapAllExcept(middleware endpoint.Middleware, excluded ...st
 	}
 
 	for inc := range included {
-		if inc == "Create" {
-			e.CreateEndpoint = middleware(e.CreateEndpoint)
+		if inc == "CreateTodo" {
+			e.CreateTodoEndpoint = middleware(e.CreateTodoEndpoint)
+		}
+		if inc == "GetAll" {
+			e.GetAllEndpoint = middleware(e.GetAllEndpoint)
+		}
+		if inc == "GetTodo" {
+			e.GetTodoEndpoint = middleware(e.GetTodoEndpoint)
+		}
+		if inc == "DeleteTodo" {
+			e.DeleteTodoEndpoint = middleware(e.DeleteTodoEndpoint)
 		}
 	}
 }
@@ -110,7 +182,10 @@ type LabeledMiddleware func(string, endpoint.Endpoint) endpoint.Endpoint
 // functionality.
 func (e *Endpoints) WrapAllLabeledExcept(middleware func(string, endpoint.Endpoint) endpoint.Endpoint, excluded ...string) {
 	included := map[string]struct{}{
-		"Create": {},
+		"CreateTodo": {},
+		"GetAll":     {},
+		"GetTodo":    {},
+		"DeleteTodo": {},
 	}
 
 	for _, ex := range excluded {
@@ -121,8 +196,17 @@ func (e *Endpoints) WrapAllLabeledExcept(middleware func(string, endpoint.Endpoi
 	}
 
 	for inc := range included {
-		if inc == "Create" {
-			e.CreateEndpoint = middleware("Create", e.CreateEndpoint)
+		if inc == "CreateTodo" {
+			e.CreateTodoEndpoint = middleware("CreateTodo", e.CreateTodoEndpoint)
+		}
+		if inc == "GetAll" {
+			e.GetAllEndpoint = middleware("GetAll", e.GetAllEndpoint)
+		}
+		if inc == "GetTodo" {
+			e.GetTodoEndpoint = middleware("GetTodo", e.GetTodoEndpoint)
+		}
+		if inc == "DeleteTodo" {
+			e.DeleteTodoEndpoint = middleware("DeleteTodo", e.DeleteTodoEndpoint)
 		}
 	}
 }
@@ -134,7 +218,10 @@ func (e *Endpoints) WrapAllLabeledExcept(middleware func(string, endpoint.Endpoi
 // WrapAllWithHttpOptionExcept(serverOption, "Status", "Ping")
 func (e *Endpoints) WrapAllWithHttpOptionExcept(serverOption httptransport.ServerOption, excluded ...string) {
 	included := map[string]struct{}{
-		"Create": {},
+		"CreateTodo": {},
+		"GetAll":     {},
+		"GetTodo":    {},
+		"DeleteTodo": {},
 	}
 
 	for _, ex := range excluded {

@@ -9,4 +9,6 @@ require (
 	github.com/metaverse/truss v0.2.1
 	github.com/pkg/errors v0.8.1
 	google.golang.org/grpc v1.37.0
+	gorm.io/driver/mysql v1.0.6
+	gorm.io/gorm v1.21.9
 )

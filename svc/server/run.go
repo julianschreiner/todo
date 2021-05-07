@@ -60,11 +60,17 @@ func NewEndpoints(service pb.TodoServer) svc.Endpoints {
 
 	// Endpoint domain.
 	var (
-		createEndpoint = svc.MakeCreateEndpoint(service)
+		createtodoEndpoint = svc.MakeCreateTodoEndpoint(service)
+		getallEndpoint     = svc.MakeGetAllEndpoint(service)
+		gettodoEndpoint    = svc.MakeGetTodoEndpoint(service)
+		deletetodoEndpoint = svc.MakeDeleteTodoEndpoint(service)
 	)
 
 	endpoints := svc.NewEndpoints()
-	endpoints.CreateEndpoint = createEndpoint
+	endpoints.CreateTodoEndpoint = createtodoEndpoint
+	endpoints.GetAllEndpoint = getallEndpoint
+	endpoints.GetTodoEndpoint = gettodoEndpoint
+	endpoints.DeleteTodoEndpoint = deletetodoEndpoint
 
 	// Wrap selected Endpoints with middlewares. See handlers/middlewares.go
 	endpoints = handlers.WrapEndpoints(endpoints)

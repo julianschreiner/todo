@@ -29,10 +29,28 @@ func MakeGRPCServer(endpoints Endpoints, options ...grpctransport.ServerOption) 
 	return &grpcServer{
 		// todo
 
-		create: grpctransport.NewServer(
-			endpoints.CreateEndpoint,
-			DecodeGRPCCreateRequest,
-			EncodeGRPCCreateResponse,
+		createtodo: grpctransport.NewServer(
+			endpoints.CreateTodoEndpoint,
+			DecodeGRPCCreateTodoRequest,
+			EncodeGRPCCreateTodoResponse,
+			serverOptions...,
+		),
+		getall: grpctransport.NewServer(
+			endpoints.GetAllEndpoint,
+			DecodeGRPCGetAllRequest,
+			EncodeGRPCGetAllResponse,
+			serverOptions...,
+		),
+		gettodo: grpctransport.NewServer(
+			endpoints.GetTodoEndpoint,
+			DecodeGRPCGetTodoRequest,
+			EncodeGRPCGetTodoResponse,
+			serverOptions...,
+		),
+		deletetodo: grpctransport.NewServer(
+			endpoints.DeleteTodoEndpoint,
+			DecodeGRPCDeleteTodoRequest,
+			EncodeGRPCDeleteTodoResponse,
 			serverOptions...,
 		),
 	}
@@ -40,34 +58,103 @@ func MakeGRPCServer(endpoints Endpoints, options ...grpctransport.ServerOption) 
 
 // grpcServer implements the TodoServer interface
 type grpcServer struct {
-	create grpctransport.Handler
+	createtodo grpctransport.Handler
+	getall     grpctransport.Handler
+	gettodo    grpctransport.Handler
+	deletetodo grpctransport.Handler
 }
 
 // Methods for grpcServer to implement TodoServer interface
 
-func (s *grpcServer) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
-	_, rep, err := s.create.ServeGRPC(ctx, req)
+func (s *grpcServer) CreateTodo(ctx context.Context, req *pb.CreateTodoRequest) (*pb.CreateTodoResponse, error) {
+	_, rep, err := s.createtodo.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return rep.(*pb.CreateResponse), nil
+	return rep.(*pb.CreateTodoResponse), nil
+}
+
+func (s *grpcServer) GetAll(ctx context.Context, req *pb.GetAllRequest) (*pb.GetAllResponse, error) {
+	_, rep, err := s.getall.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return rep.(*pb.GetAllResponse), nil
+}
+
+func (s *grpcServer) GetTodo(ctx context.Context, req *pb.GetTodoRequest) (*pb.GetTodoResponse, error) {
+	_, rep, err := s.gettodo.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return rep.(*pb.GetTodoResponse), nil
+}
+
+func (s *grpcServer) DeleteTodo(ctx context.Context, req *pb.DeleteTodoRequest) (*pb.DeleteTodoResponse, error) {
+	_, rep, err := s.deletetodo.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return rep.(*pb.DeleteTodoResponse), nil
 }
 
 // Server Decode
 
-// DecodeGRPCCreateRequest is a transport/grpc.DecodeRequestFunc that converts a
-// gRPC create request to a user-domain create request. Primarily useful in a server.
-func DecodeGRPCCreateRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*pb.CreateRequest)
+// DecodeGRPCCreateTodoRequest is a transport/grpc.DecodeRequestFunc that converts a
+// gRPC createtodo request to a user-domain createtodo request. Primarily useful in a server.
+func DecodeGRPCCreateTodoRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*pb.CreateTodoRequest)
+	return req, nil
+}
+
+// DecodeGRPCGetAllRequest is a transport/grpc.DecodeRequestFunc that converts a
+// gRPC getall request to a user-domain getall request. Primarily useful in a server.
+func DecodeGRPCGetAllRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*pb.GetAllRequest)
+	return req, nil
+}
+
+// DecodeGRPCGetTodoRequest is a transport/grpc.DecodeRequestFunc that converts a
+// gRPC gettodo request to a user-domain gettodo request. Primarily useful in a server.
+func DecodeGRPCGetTodoRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*pb.GetTodoRequest)
+	return req, nil
+}
+
+// DecodeGRPCDeleteTodoRequest is a transport/grpc.DecodeRequestFunc that converts a
+// gRPC deletetodo request to a user-domain deletetodo request. Primarily useful in a server.
+func DecodeGRPCDeleteTodoRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*pb.DeleteTodoRequest)
 	return req, nil
 }
 
 // Server Encode
 
-// EncodeGRPCCreateResponse is a transport/grpc.EncodeResponseFunc that converts a
-// user-domain create response to a gRPC create reply. Primarily useful in a server.
-func EncodeGRPCCreateResponse(_ context.Context, response interface{}) (interface{}, error) {
-	resp := response.(*pb.CreateResponse)
+// EncodeGRPCCreateTodoResponse is a transport/grpc.EncodeResponseFunc that converts a
+// user-domain createtodo response to a gRPC createtodo reply. Primarily useful in a server.
+func EncodeGRPCCreateTodoResponse(_ context.Context, response interface{}) (interface{}, error) {
+	resp := response.(*pb.CreateTodoResponse)
+	return resp, nil
+}
+
+// EncodeGRPCGetAllResponse is a transport/grpc.EncodeResponseFunc that converts a
+// user-domain getall response to a gRPC getall reply. Primarily useful in a server.
+func EncodeGRPCGetAllResponse(_ context.Context, response interface{}) (interface{}, error) {
+	resp := response.(*pb.GetAllResponse)
+	return resp, nil
+}
+
+// EncodeGRPCGetTodoResponse is a transport/grpc.EncodeResponseFunc that converts a
+// user-domain gettodo response to a gRPC gettodo reply. Primarily useful in a server.
+func EncodeGRPCGetTodoResponse(_ context.Context, response interface{}) (interface{}, error) {
+	resp := response.(*pb.GetTodoResponse)
+	return resp, nil
+}
+
+// EncodeGRPCDeleteTodoResponse is a transport/grpc.EncodeResponseFunc that converts a
+// user-domain deletetodo response to a gRPC deletetodo reply. Primarily useful in a server.
+func EncodeGRPCDeleteTodoResponse(_ context.Context, response interface{}) (interface{}, error) {
+	resp := response.(*pb.DeleteTodoResponse)
 	return resp, nil
 }
 

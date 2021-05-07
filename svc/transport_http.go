@@ -55,14 +55,47 @@ func MakeHTTPHandler(endpoints Endpoints, options ...httptransport.ServerOption)
 	serverOptions = append(serverOptions, options...)
 	m := mux.NewRouter()
 
-	if endpoints.HasHttpHandlerFunc("Create") {
-		m.Methods("POST").Path("/todo").HandlerFunc(endpoints.GetHttpHandlerFunc("Create"))
+	if endpoints.HasHttpHandlerFunc("CreateTodo") {
+		m.Methods("POST").Path("/todo/").HandlerFunc(endpoints.GetHttpHandlerFunc("CreateTodo"))
 	} else {
-		m.Methods("POST").Path("/todo").Handler(httptransport.NewServer(
-			endpoints.CreateEndpoint,
-			endpoints.GetHttpRequestDecoder("Create", DecodeHTTPCreateZeroRequest),
-			endpoints.GetHttpResponseEncoder("Create", EncodeHTTPGenericResponse),
-			append(serverOptions, endpoints.GetHttpServerOptions("Create")...)...,
+		m.Methods("POST").Path("/todo/").Handler(httptransport.NewServer(
+			endpoints.CreateTodoEndpoint,
+			endpoints.GetHttpRequestDecoder("CreateTodo", DecodeHTTPCreateTodoZeroRequest),
+			endpoints.GetHttpResponseEncoder("CreateTodo", EncodeHTTPGenericResponse),
+			append(serverOptions, endpoints.GetHttpServerOptions("CreateTodo")...)...,
+		))
+	}
+
+	if endpoints.HasHttpHandlerFunc("GetAll") {
+		m.Methods("GET").Path("/todo").HandlerFunc(endpoints.GetHttpHandlerFunc("GetAll"))
+	} else {
+		m.Methods("GET").Path("/todo").Handler(httptransport.NewServer(
+			endpoints.GetAllEndpoint,
+			endpoints.GetHttpRequestDecoder("GetAll", DecodeHTTPGetAllZeroRequest),
+			endpoints.GetHttpResponseEncoder("GetAll", EncodeHTTPGenericResponse),
+			append(serverOptions, endpoints.GetHttpServerOptions("GetAll")...)...,
+		))
+	}
+
+	if endpoints.HasHttpHandlerFunc("GetTodo") {
+		m.Methods("GET").Path("/todo/{id}").HandlerFunc(endpoints.GetHttpHandlerFunc("GetTodo"))
+	} else {
+		m.Methods("GET").Path("/todo/{id}").Handler(httptransport.NewServer(
+			endpoints.GetTodoEndpoint,
+			endpoints.GetHttpRequestDecoder("GetTodo", DecodeHTTPGetTodoZeroRequest),
+			endpoints.GetHttpResponseEncoder("GetTodo", EncodeHTTPGenericResponse),
+			append(serverOptions, endpoints.GetHttpServerOptions("GetTodo")...)...,
+		))
+	}
+
+	if endpoints.HasHttpHandlerFunc("DeleteTodo") {
+		m.Methods("DELETE").Path("/todo/{id}").HandlerFunc(endpoints.GetHttpHandlerFunc("DeleteTodo"))
+	} else {
+		m.Methods("DELETE").Path("/todo/{id}").Handler(httptransport.NewServer(
+			endpoints.DeleteTodoEndpoint,
+			endpoints.GetHttpRequestDecoder("DeleteTodo", DecodeHTTPDeleteTodoZeroRequest),
+			endpoints.GetHttpResponseEncoder("DeleteTodo", EncodeHTTPGenericResponse),
+			append(serverOptions, endpoints.GetHttpServerOptions("DeleteTodo")...)...,
 		))
 	}
 	return m
@@ -118,12 +151,12 @@ func (h httpError) Headers() http.Header {
 
 // Server Decode
 
-// DecodeHTTPCreateZeroRequest is a transport/http.DecodeRequestFunc that
-// decodes a JSON-encoded create request from the HTTP request
+// DecodeHTTPCreateTodoZeroRequest is a transport/http.DecodeRequestFunc that
+// decodes a JSON-encoded createtodo request from the HTTP request
 // body. Primarily useful in a server.
-func DecodeHTTPCreateZeroRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func DecodeHTTPCreateTodoZeroRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	defer r.Body.Close()
-	var req pb.CreateRequest
+	var req pb.CreateTodoRequest
 	buf, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot read body of http request")
@@ -150,6 +183,128 @@ func DecodeHTTPCreateZeroRequest(_ context.Context, r *http.Request) (interface{
 
 	queryParams := r.URL.Query()
 	_ = queryParams
+
+	return &req, err
+}
+
+// DecodeHTTPGetAllZeroRequest is a transport/http.DecodeRequestFunc that
+// decodes a JSON-encoded getall request from the HTTP request
+// body. Primarily useful in a server.
+func DecodeHTTPGetAllZeroRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	var req pb.GetAllRequest
+	buf, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot read body of http request")
+	}
+	if len(buf) > 0 {
+		// AllowUnknownFields stops the unmarshaler from failing if the JSON contains unknown fields.
+		unmarshaller := jsonpb.Unmarshaler{
+			AllowUnknownFields: true,
+		}
+		if err = unmarshaller.Unmarshal(bytes.NewBuffer(buf), &req); err != nil {
+			const size = 8196
+			if len(buf) > size {
+				buf = buf[:size]
+			}
+			return nil, httpError{errors.Wrapf(err, "request body '%s': cannot parse non-json request body", buf),
+				http.StatusBadRequest,
+				nil,
+			}
+		}
+	}
+
+	pathParams := mux.Vars(r)
+	_ = pathParams
+
+	queryParams := r.URL.Query()
+	_ = queryParams
+
+	return &req, err
+}
+
+// DecodeHTTPGetTodoZeroRequest is a transport/http.DecodeRequestFunc that
+// decodes a JSON-encoded gettodo request from the HTTP request
+// body. Primarily useful in a server.
+func DecodeHTTPGetTodoZeroRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	var req pb.GetTodoRequest
+	buf, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot read body of http request")
+	}
+	if len(buf) > 0 {
+		// AllowUnknownFields stops the unmarshaler from failing if the JSON contains unknown fields.
+		unmarshaller := jsonpb.Unmarshaler{
+			AllowUnknownFields: true,
+		}
+		if err = unmarshaller.Unmarshal(bytes.NewBuffer(buf), &req); err != nil {
+			const size = 8196
+			if len(buf) > size {
+				buf = buf[:size]
+			}
+			return nil, httpError{errors.Wrapf(err, "request body '%s': cannot parse non-json request body", buf),
+				http.StatusBadRequest,
+				nil,
+			}
+		}
+	}
+
+	pathParams := mux.Vars(r)
+	_ = pathParams
+
+	queryParams := r.URL.Query()
+	_ = queryParams
+
+	IdGetTodoStr := pathParams["id"]
+	IdGetTodo, err := strconv.ParseUint(IdGetTodoStr, 10, 64)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("Error while extracting IdGetTodo from path, pathParams: %v", pathParams))
+	}
+	req.Id = IdGetTodo
+
+	return &req, err
+}
+
+// DecodeHTTPDeleteTodoZeroRequest is a transport/http.DecodeRequestFunc that
+// decodes a JSON-encoded deletetodo request from the HTTP request
+// body. Primarily useful in a server.
+func DecodeHTTPDeleteTodoZeroRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	defer r.Body.Close()
+	var req pb.DeleteTodoRequest
+	buf, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot read body of http request")
+	}
+	if len(buf) > 0 {
+		// AllowUnknownFields stops the unmarshaler from failing if the JSON contains unknown fields.
+		unmarshaller := jsonpb.Unmarshaler{
+			AllowUnknownFields: true,
+		}
+		if err = unmarshaller.Unmarshal(bytes.NewBuffer(buf), &req); err != nil {
+			const size = 8196
+			if len(buf) > size {
+				buf = buf[:size]
+			}
+			return nil, httpError{errors.Wrapf(err, "request body '%s': cannot parse non-json request body", buf),
+				http.StatusBadRequest,
+				nil,
+			}
+		}
+	}
+
+	pathParams := mux.Vars(r)
+	_ = pathParams
+
+	queryParams := r.URL.Query()
+	_ = queryParams
+
+	IdDeleteTodoStr := pathParams["id"]
+	IdDeleteTodo, err := strconv.ParseUint(IdDeleteTodoStr, 10, 64)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("Error while extracting IdDeleteTodo from path, pathParams: %v", pathParams))
+	}
+	req.Id = IdDeleteTodo
 
 	return &req, err
 }
