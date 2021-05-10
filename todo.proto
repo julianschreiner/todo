@@ -39,11 +39,13 @@ message Task {
   uint64 user = 1;
   string todo = 2;
   string due = 3;
-  string done = 4;
+  bool done = 4;
 }
 
 message CreateTodoRequest {
-  Task todo = 1;
+  uint64 user = 1;
+  string todo = 2;
+  string due = 3;
 }
 
 message CreateTodoResponse {

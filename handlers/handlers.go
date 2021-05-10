@@ -58,21 +58,49 @@ type todoService struct {
 }
 
 func (s todoService) GetTodo(ctx context.Context, in *pb.GetTodoRequest) (*pb.GetTodoResponse, error) {
-	var resp pb.GetTodoResponse
-	return &resp, nil
+	resp, err := s.todoManager.GetTodo(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetTodoResponse{Todo: resp.ToPb()}, nil
 }
 
 func (s todoService) DeleteTodo(ctx context.Context, in *pb.DeleteTodoRequest) (*pb.DeleteTodoResponse, error) {
-	var resp pb.DeleteTodoResponse
-	return &resp, nil
+	succ, err := s.todoManager.DeleteTodo(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.DeleteTodoResponse{Success: succ}, nil
 }
 
 func (s todoService) CreateTodo(ctx context.Context, in *pb.CreateTodoRequest) (*pb.CreateTodoResponse, error) {
-	var resp pb.CreateTodoResponse
-	return &resp, nil
+	input := todo.Todo{
+		User: uint(in.User),
+		Todo: in.Todo,
+		Due:  in.Due,
+		Done: false,
+	}
+
+	resp, err := s.todoManager.CreateTodo(ctx, &input)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.CreateTodoResponse{Todo: resp.ToPb()}, nil
 }
 
 func (s todoService) GetAll(ctx context.Context, in *pb.GetAllRequest) (*pb.GetAllResponse, error) {
-	var resp pb.GetAllResponse
-	return &resp, nil
+	resp, err := s.todoManager.GetAllTodos(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]*pb.Task, len(resp))
+	for i, value := range resp {
+		ret[i] = value.ToPb()
+	}
+
+	return &pb.GetAllResponse{Todo: ret}, nil
 }

@@ -2,11 +2,12 @@ package todo
 
 import (
 	"context"
+	"errors"
 	"gorm.io/gorm"
 )
 
 type TodoRepository interface {
-	CreateTodo(ctx context.Context, todo *Todo) (*Todo, error)
+	CreateTodo(ctx context.Context, todo *Todo) error
 	GetAllTodos(ctx context.Context) ([]*Todo, error)
 	GetTodoById(ctx context.Context, id uint64) (*Todo, error)
 	DeleteTodoBy(ctx context.Context, id uint64) error
@@ -22,18 +23,36 @@ func NewTodoRepository(db *gorm.DB) TodoRepository {
 	}
 }
 
-func (r *todoRepository) CreateTodo(ctx context.Context, todo *Todo) (*Todo, error) {
-	return nil, nil
+func (r *todoRepository) CreateTodo(ctx context.Context, todo *Todo) error {
+	return r.db.Save(todo).Error
 }
 
 func (r *todoRepository) GetAllTodos(ctx context.Context) ([]*Todo, error) {
-	return nil, nil
+	var todos []*Todo
+	err := r.db.Find(todos).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, errors.New("InternalServerError")
+	}
+
+	return todos, nil
 }
 
 func (r *todoRepository) GetTodoById(ctx context.Context, id uint64) (*Todo, error) {
-	return nil, nil
+	var todo *Todo
+	err := r.db.First(todo, id).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, errors.New("InternalServerError")
+	}
+
+	return todo, nil
 }
 
 func (r *todoRepository) DeleteTodoBy(ctx context.Context, id uint64) error {
-	return nil
+	todo := &Todo{
+		Model: gorm.Model{
+			ID: uint(id),
+		},
+	}
+
+	return r.db.Delete(todo).Error
 }

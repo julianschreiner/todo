@@ -268,7 +268,11 @@ func EncodeHTTPCreateTodoZeroRequest(_ context.Context, r *http.Request, request
 	var buf bytes.Buffer
 	toRet := request.(*pb.CreateTodoRequest)
 
+	toRet.User = req.User
+
 	toRet.Todo = req.Todo
+
+	toRet.Due = req.Due
 
 	encoder := json.NewEncoder(&buf)
 	encoder.SetEscapeHTML(false)

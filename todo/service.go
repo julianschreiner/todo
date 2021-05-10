@@ -25,17 +25,37 @@ func NewTodoService(repository TodoRepository, log *log.Logger) TodoService {
 }
 
 func (s *todoService) CreateTodo(ctx context.Context, todo *Todo) (*Todo, error) {
-	return nil, nil
+	err := s.todoRepository.CreateTodo(ctx, todo)
+	if err != nil {
+		return nil, err
+	}
+
+	return todo, nil
 }
 
 func (s *todoService) GetAllTodos(ctx context.Context) ([]*Todo, error) {
-	return nil, nil
+	resp, err := s.todoRepository.GetAllTodos(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func (s *todoService) GetTodo(ctx context.Context, id uint64) (*Todo, error) {
-	return nil, nil
+	resp, err := s.todoRepository.GetTodoById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func (s *todoService) DeleteTodo(ctx context.Context, id uint64) (bool, error) {
-	return false, nil
+	err := s.todoRepository.DeleteTodoBy(ctx, id)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
