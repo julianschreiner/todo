@@ -7,14 +7,14 @@ import "github.com/metaverse/truss/deftree/googlethirdparty/annotations.proto";
 service Todo {
   rpc CreateTodo(CreateTodoRequest) returns (CreateTodoResponse) {
     option(google.api.http) = {
-      post: "/todo/"
+      post: "/todo"
       body: "*"
     };
   }
 
   rpc GetAll(GetAllRequest) returns (GetAllResponse) {
     option(google.api.http) = {
-      get: "/todo"
+      get: "/todo/{user}"
       body: "*"
     };
   }
@@ -33,6 +33,13 @@ service Todo {
     };
   }
 
+  rpc UpdateTodo(UpdateTodoRequest) returns (UpdateTodoResponse) {
+    option(google.api.http) = {
+      put: "/todo/{id}"
+      body: "*"
+    };
+  }
+
 }
 
 message Task {
@@ -40,6 +47,14 @@ message Task {
   string todo = 2;
   string due = 3;
   bool done = 4;
+}
+
+message Usr {
+  uint64 id = 1;
+  string email = 2;
+  string forename = 3;
+  string surname = 4;
+  string dob = 5;
 }
 
 message CreateTodoRequest {
@@ -53,11 +68,12 @@ message CreateTodoResponse {
 }
 
 message GetAllRequest {
-
+  uint64 user = 1;
 }
 
 message GetAllResponse {
-  repeated Task todo = 1;
+  Usr user = 1;
+  repeated Task todo = 2;
 }
 
 message GetTodoRequest {
@@ -74,4 +90,12 @@ message DeleteTodoRequest {
 
 message DeleteTodoResponse {
   bool success = 1;
+}
+
+message UpdateTodoRequest {
+
+}
+
+message UpdateTodoResponse {
+
 }

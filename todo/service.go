@@ -7,7 +7,7 @@ import (
 
 type TodoService interface {
 	CreateTodo(ctx context.Context, todo *Todo) (*Todo, error)
-	GetAllTodos(ctx context.Context) ([]*Todo, error)
+	GetAllTodosForUser(ctx context.Context, user uint64) ([]*Todo, error)
 	GetTodo(ctx context.Context, id uint64) (*Todo, error)
 	DeleteTodo(ctx context.Context, id uint64) (bool, error)
 }
@@ -33,8 +33,8 @@ func (s *todoService) CreateTodo(ctx context.Context, todo *Todo) (*Todo, error)
 	return todo, nil
 }
 
-func (s *todoService) GetAllTodos(ctx context.Context) ([]*Todo, error) {
-	resp, err := s.todoRepository.GetAllTodos(ctx)
+func (s *todoService) GetAllTodosForUser(ctx context.Context, user uint64) ([]*Todo, error) {
+	resp, err := s.todoRepository.GetAllTodos(ctx, user)
 	if err != nil {
 		return nil, err
 	}

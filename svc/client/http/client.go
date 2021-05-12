@@ -54,7 +54,7 @@ func New(instance string, options ...httptransport.ClientOption) (pb.TodoServer,
 	{
 		CreateTodoZeroEndpoint = httptransport.NewClient(
 			"POST",
-			copyURL(u, "/todo/"),
+			copyURL(u, "/todo"),
 			EncodeHTTPCreateTodoZeroRequest,
 			DecodeHTTPCreateTodoResponse,
 			options...,
@@ -64,7 +64,7 @@ func New(instance string, options ...httptransport.ClientOption) (pb.TodoServer,
 	{
 		GetAllZeroEndpoint = httptransport.NewClient(
 			"GET",
-			copyURL(u, "/todo"),
+			copyURL(u, "/todo/"),
 			EncodeHTTPGetAllZeroRequest,
 			DecodeHTTPGetAllResponse,
 			options...,
@@ -90,12 +90,23 @@ func New(instance string, options ...httptransport.ClientOption) (pb.TodoServer,
 			options...,
 		).Endpoint()
 	}
+	var UpdateTodoZeroEndpoint endpoint.Endpoint
+	{
+		UpdateTodoZeroEndpoint = httptransport.NewClient(
+			"PUT",
+			copyURL(u, "/todo/"),
+			EncodeHTTPUpdateTodoZeroRequest,
+			DecodeHTTPUpdateTodoResponse,
+			options...,
+		).Endpoint()
+	}
 
 	endpoints := svc.NewEndpoints()
 	endpoints.CreateTodoEndpoint = CreateTodoZeroEndpoint
 	endpoints.GetAllEndpoint = GetAllZeroEndpoint
 	endpoints.GetTodoEndpoint = GetTodoZeroEndpoint
 	endpoints.DeleteTodoEndpoint = DeleteTodoZeroEndpoint
+	endpoints.UpdateTodoEndpoint = UpdateTodoZeroEndpoint
 
 	return endpoints, nil
 }
@@ -231,6 +242,33 @@ func DecodeHTTPDeleteTodoResponse(_ context.Context, r *http.Response) (interfac
 	return &resp, nil
 }
 
+// DecodeHTTPUpdateTodoResponse is a transport/http.DecodeResponseFunc that decodes
+// a JSON-encoded UpdateTodoResponse response from the HTTP response body.
+// If the response has a non-200 status code, we will interpret that as an
+// error and attempt to decode the specific error message from the response
+// body. Primarily useful in a client.
+func DecodeHTTPUpdateTodoResponse(_ context.Context, r *http.Response) (interface{}, error) {
+	defer r.Body.Close()
+	buf, err := ioutil.ReadAll(r.Body)
+	if err == io.EOF {
+		return nil, errors.New("response http body empty")
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot read http body")
+	}
+
+	if r.StatusCode != http.StatusOK {
+		return nil, errors.Wrapf(errorDecoder(buf), "status code: '%d'", r.StatusCode)
+	}
+
+	var resp pb.UpdateTodoResponse
+	if err = jsonpb.UnmarshalString(string(buf), &resp); err != nil {
+		return nil, errorDecoder(buf)
+	}
+
+	return &resp, nil
+}
+
 // HTTP Client Encode
 
 // EncodeHTTPCreateTodoZeroRequest is a transport/http.EncodeRequestFunc
@@ -249,7 +287,6 @@ func EncodeHTTPCreateTodoZeroRequest(_ context.Context, r *http.Request, request
 	path := strings.Join([]string{
 		"",
 		"todo",
-		"",
 	}, "/")
 	u, err := url.Parse(path)
 	if err != nil {
@@ -299,6 +336,7 @@ func EncodeHTTPGetAllZeroRequest(_ context.Context, r *http.Request, request int
 	path := strings.Join([]string{
 		"",
 		"todo",
+		fmt.Sprint(req.User),
 	}, "/")
 	u, err := url.Parse(path)
 	if err != nil {
@@ -384,6 +422,49 @@ func EncodeHTTPDeleteTodoZeroRequest(_ context.Context, r *http.Request, request
 	// Set the body parameters
 	var buf bytes.Buffer
 	toRet := request.(*pb.DeleteTodoRequest)
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(toRet); err != nil {
+		return errors.Wrapf(err, "couldn't encode body as json %v", toRet)
+	}
+	r.Body = ioutil.NopCloser(&buf)
+	return nil
+}
+
+// EncodeHTTPUpdateTodoZeroRequest is a transport/http.EncodeRequestFunc
+// that encodes a updatetodo request into the various portions of
+// the http request (path, query, and body).
+func EncodeHTTPUpdateTodoZeroRequest(_ context.Context, r *http.Request, request interface{}) error {
+	strval := ""
+	_ = strval
+	req := request.(*pb.UpdateTodoRequest)
+	_ = req
+
+	r.Header.Set("transport", "HTTPJSON")
+	r.Header.Set("request-url", r.URL.Path)
+
+	// Set the path parameters
+	path := strings.Join([]string{
+		"",
+		"todo",
+		fmt.Sprint(req.Id),
+	}, "/")
+	u, err := url.Parse(path)
+	if err != nil {
+		return errors.Wrapf(err, "couldn't unmarshal path %q", path)
+	}
+	r.URL.RawPath = u.RawPath
+	r.URL.Path = u.Path
+
+	// Set the query parameters
+	values := r.URL.Query()
+	var tmp []byte
+	_ = tmp
+
+	r.URL.RawQuery = values.Encode()
+	// Set the body parameters
+	var buf bytes.Buffer
+	toRet := request.(*pb.UpdateTodoRequest)
 	encoder := json.NewEncoder(&buf)
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(toRet); err != nil {

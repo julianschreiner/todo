@@ -8,7 +8,7 @@ import (
 
 type TodoRepository interface {
 	CreateTodo(ctx context.Context, todo *Todo) error
-	GetAllTodos(ctx context.Context) ([]*Todo, error)
+	GetAllTodos(ctx context.Context, user uint64) ([]*Todo, error)
 	GetTodoById(ctx context.Context, id uint64) (*Todo, error)
 	DeleteTodoBy(ctx context.Context, id uint64) error
 }
@@ -27,9 +27,9 @@ func (r *todoRepository) CreateTodo(ctx context.Context, todo *Todo) error {
 	return r.db.Save(todo).Error
 }
 
-func (r *todoRepository) GetAllTodos(ctx context.Context) ([]*Todo, error) {
+func (r *todoRepository) GetAllTodos(ctx context.Context, user uint64) ([]*Todo, error) {
 	var todos []*Todo
-	err := r.db.Find(todos).Error
+	err := r.db.Where("User = ?", user).Find(&todos).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, errors.New("InternalServerError")
 	}

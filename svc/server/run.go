@@ -64,6 +64,7 @@ func NewEndpoints(service pb.TodoServer) svc.Endpoints {
 		getallEndpoint     = svc.MakeGetAllEndpoint(service)
 		gettodoEndpoint    = svc.MakeGetTodoEndpoint(service)
 		deletetodoEndpoint = svc.MakeDeleteTodoEndpoint(service)
+		updatetodoEndpoint = svc.MakeUpdateTodoEndpoint(service)
 	)
 
 	endpoints := svc.NewEndpoints()
@@ -71,6 +72,7 @@ func NewEndpoints(service pb.TodoServer) svc.Endpoints {
 	endpoints.GetAllEndpoint = getallEndpoint
 	endpoints.GetTodoEndpoint = gettodoEndpoint
 	endpoints.DeleteTodoEndpoint = deletetodoEndpoint
+	endpoints.UpdateTodoEndpoint = updatetodoEndpoint
 
 	// Wrap selected Endpoints with middlewares. See handlers/middlewares.go
 	endpoints = handlers.WrapEndpoints(endpoints)

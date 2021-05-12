@@ -88,11 +88,25 @@ func New(conn *grpc.ClientConn, options ...ClientOption) (pb.TodoServer, error) 
 		).Endpoint()
 	}
 
+	var updatetodoEndpoint endpoint.Endpoint
+	{
+		updatetodoEndpoint = grpctransport.NewClient(
+			conn,
+			"todo.Todo",
+			"UpdateTodo",
+			EncodeGRPCUpdateTodoRequest,
+			DecodeGRPCUpdateTodoResponse,
+			pb.UpdateTodoResponse{},
+			clientOptions...,
+		).Endpoint()
+	}
+
 	endpoints := svc.NewEndpoints()
 	endpoints.CreateTodoEndpoint = createtodoEndpoint
 	endpoints.GetAllEndpoint = getallEndpoint
 	endpoints.GetTodoEndpoint = gettodoEndpoint
 	endpoints.DeleteTodoEndpoint = deletetodoEndpoint
+	endpoints.UpdateTodoEndpoint = updatetodoEndpoint
 
 	return endpoints, nil
 }
@@ -127,6 +141,13 @@ func DecodeGRPCDeleteTodoResponse(_ context.Context, grpcReply interface{}) (int
 	return reply, nil
 }
 
+// DecodeGRPCUpdateTodoResponse is a transport/grpc.DecodeResponseFunc that converts a
+// gRPC updatetodo reply to a user-domain updatetodo response. Primarily useful in a client.
+func DecodeGRPCUpdateTodoResponse(_ context.Context, grpcReply interface{}) (interface{}, error) {
+	reply := grpcReply.(*pb.UpdateTodoResponse)
+	return reply, nil
+}
+
 // GRPC Client Encode
 
 // EncodeGRPCCreateTodoRequest is a transport/grpc.EncodeRequestFunc that converts a
@@ -154,6 +175,13 @@ func EncodeGRPCGetTodoRequest(_ context.Context, request interface{}) (interface
 // user-domain deletetodo request to a gRPC deletetodo request. Primarily useful in a client.
 func EncodeGRPCDeleteTodoRequest(_ context.Context, request interface{}) (interface{}, error) {
 	req := request.(*pb.DeleteTodoRequest)
+	return req, nil
+}
+
+// EncodeGRPCUpdateTodoRequest is a transport/grpc.EncodeRequestFunc that converts a
+// user-domain updatetodo request to a gRPC updatetodo request. Primarily useful in a client.
+func EncodeGRPCUpdateTodoRequest(_ context.Context, request interface{}) (interface{}, error) {
+	req := request.(*pb.UpdateTodoRequest)
 	return req, nil
 }
 

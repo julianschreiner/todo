@@ -53,6 +53,12 @@ func MakeGRPCServer(endpoints Endpoints, options ...grpctransport.ServerOption) 
 			EncodeGRPCDeleteTodoResponse,
 			serverOptions...,
 		),
+		updatetodo: grpctransport.NewServer(
+			endpoints.UpdateTodoEndpoint,
+			DecodeGRPCUpdateTodoRequest,
+			EncodeGRPCUpdateTodoResponse,
+			serverOptions...,
+		),
 	}
 }
 
@@ -62,6 +68,7 @@ type grpcServer struct {
 	getall     grpctransport.Handler
 	gettodo    grpctransport.Handler
 	deletetodo grpctransport.Handler
+	updatetodo grpctransport.Handler
 }
 
 // Methods for grpcServer to implement TodoServer interface
@@ -98,6 +105,14 @@ func (s *grpcServer) DeleteTodo(ctx context.Context, req *pb.DeleteTodoRequest) 
 	return rep.(*pb.DeleteTodoResponse), nil
 }
 
+func (s *grpcServer) UpdateTodo(ctx context.Context, req *pb.UpdateTodoRequest) (*pb.UpdateTodoResponse, error) {
+	_, rep, err := s.updatetodo.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return rep.(*pb.UpdateTodoResponse), nil
+}
+
 // Server Decode
 
 // DecodeGRPCCreateTodoRequest is a transport/grpc.DecodeRequestFunc that converts a
@@ -128,6 +143,13 @@ func DecodeGRPCDeleteTodoRequest(_ context.Context, grpcReq interface{}) (interf
 	return req, nil
 }
 
+// DecodeGRPCUpdateTodoRequest is a transport/grpc.DecodeRequestFunc that converts a
+// gRPC updatetodo request to a user-domain updatetodo request. Primarily useful in a server.
+func DecodeGRPCUpdateTodoRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*pb.UpdateTodoRequest)
+	return req, nil
+}
+
 // Server Encode
 
 // EncodeGRPCCreateTodoResponse is a transport/grpc.EncodeResponseFunc that converts a
@@ -155,6 +177,13 @@ func EncodeGRPCGetTodoResponse(_ context.Context, response interface{}) (interfa
 // user-domain deletetodo response to a gRPC deletetodo reply. Primarily useful in a server.
 func EncodeGRPCDeleteTodoResponse(_ context.Context, response interface{}) (interface{}, error) {
 	resp := response.(*pb.DeleteTodoResponse)
+	return resp, nil
+}
+
+// EncodeGRPCUpdateTodoResponse is a transport/grpc.EncodeResponseFunc that converts a
+// user-domain updatetodo response to a gRPC updatetodo reply. Primarily useful in a server.
+func EncodeGRPCUpdateTodoResponse(_ context.Context, response interface{}) (interface{}, error) {
+	resp := response.(*pb.UpdateTodoResponse)
 	return resp, nil
 }
 

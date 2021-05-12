@@ -44,6 +44,7 @@ type Endpoints struct {
 	GetAllEndpoint     endpoint.Endpoint
 	GetTodoEndpoint    endpoint.Endpoint
 	DeleteTodoEndpoint endpoint.Endpoint
+	UpdateTodoEndpoint endpoint.Endpoint
 }
 
 func NewEndpoints() Endpoints {
@@ -87,6 +88,14 @@ func (e Endpoints) DeleteTodo(ctx context.Context, in *pb.DeleteTodoRequest) (*p
 		return nil, err
 	}
 	return response.(*pb.DeleteTodoResponse), nil
+}
+
+func (e Endpoints) UpdateTodo(ctx context.Context, in *pb.UpdateTodoRequest) (*pb.UpdateTodoResponse, error) {
+	response, err := e.UpdateTodoEndpoint(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	return response.(*pb.UpdateTodoResponse), nil
 }
 
 // Make Endpoints
@@ -135,6 +144,17 @@ func MakeDeleteTodoEndpoint(s pb.TodoServer) endpoint.Endpoint {
 	}
 }
 
+func MakeUpdateTodoEndpoint(s pb.TodoServer) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(*pb.UpdateTodoRequest)
+		v, err := s.UpdateTodo(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return v, nil
+	}
+}
+
 // WrapAllExcept wraps each Endpoint field of struct Endpoints with a
 // go-kit/kit/endpoint.Middleware.
 // Use this for applying a set of middlewares to every endpoint in the service.
@@ -146,6 +166,7 @@ func (e *Endpoints) WrapAllExcept(middleware endpoint.Middleware, excluded ...st
 		"GetAll":     {},
 		"GetTodo":    {},
 		"DeleteTodo": {},
+		"UpdateTodo": {},
 	}
 
 	for _, ex := range excluded {
@@ -168,6 +189,9 @@ func (e *Endpoints) WrapAllExcept(middleware endpoint.Middleware, excluded ...st
 		if inc == "DeleteTodo" {
 			e.DeleteTodoEndpoint = middleware(e.DeleteTodoEndpoint)
 		}
+		if inc == "UpdateTodo" {
+			e.UpdateTodoEndpoint = middleware(e.UpdateTodoEndpoint)
+		}
 	}
 }
 
@@ -186,6 +210,7 @@ func (e *Endpoints) WrapAllLabeledExcept(middleware func(string, endpoint.Endpoi
 		"GetAll":     {},
 		"GetTodo":    {},
 		"DeleteTodo": {},
+		"UpdateTodo": {},
 	}
 
 	for _, ex := range excluded {
@@ -208,6 +233,9 @@ func (e *Endpoints) WrapAllLabeledExcept(middleware func(string, endpoint.Endpoi
 		if inc == "DeleteTodo" {
 			e.DeleteTodoEndpoint = middleware("DeleteTodo", e.DeleteTodoEndpoint)
 		}
+		if inc == "UpdateTodo" {
+			e.UpdateTodoEndpoint = middleware("UpdateTodo", e.UpdateTodoEndpoint)
+		}
 	}
 }
 
@@ -222,6 +250,7 @@ func (e *Endpoints) WrapAllWithHttpOptionExcept(serverOption httptransport.Serve
 		"GetAll":     {},
 		"GetTodo":    {},
 		"DeleteTodo": {},
+		"UpdateTodo": {},
 	}
 
 	for _, ex := range excluded {
